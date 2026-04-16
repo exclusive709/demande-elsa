@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#050505" />
+    <title>Une histoire… pas comme les autres</title>
+    <style>
+      :root {
+        --bg: #030303;
+        --pink: #ff4fd8;
+        --pink2: #ff8be8;
+        --white: #f7f7ff;
+        --blue: #8bbcff;
+        --glass: rgba(255, 255, 255, 0.08);
+        --glass2: rgba(255, 255, 255, 0.14);
+        --shadow:
+          0 0 30px rgba(255, 79, 216, 0.18), 0 0 60px rgba(139, 188, 255, 0.12);
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--bg);
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial,
+          sans-serif;
+      }
+      body {
+        touch-action: none;
+        user-select: none;
+        color: var(--white);
+      }
+      canvas {
+        display: block;
+      }
+
+      #app {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        background:
+          radial-gradient(
+            circle at 50% 40%,
+            rgba(255, 79, 216, 0.08),
+            transparent 40%
+          ),
+          #020202;
+      }
+      #fx,
+      #stars {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+      .intro,
+      .proposal {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+        opacity: 0;
+        transform: translateY(12px) scale(0.985);
+        transition:
+          opacity 1.4s ease,
+          transform 1.4s ease;
+      }
+      .intro.visible,
+      .proposal.visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      .intro {
+        background: #000;
+        font-size: clamp(1.4rem, 4vw, 3rem);
+        letter-spacing: 0.02em;
+        text-shadow:
+          0 0 18px rgba(255, 255, 255, 0.22),
+          0 0 30px rgba(255, 79, 216, 0.18);
+      }
+      .proposal {
+        font-size: clamp(2rem, 7vw, 5rem);
+        font-weight: 700;
+        line-height: 1.1;
+        text-shadow:
+          0 0 18px rgba(255, 79, 216, 0.42),
+          0 0 55px rgba(255, 79, 216, 0.25),
+          0 0 90px rgba(139, 188, 255, 0.14);
+        filter: drop-shadow(0 0 24px rgba(255, 79, 216, 0.25));
+        animation: pulse 2.8s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.02);
+        }
+      }
+
+      .ui {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 18px;
+        z-index: 100;
+      }
+      .panel {
+        pointer-events: auto;
+        width: min(560px, calc(100vw - 24px));
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.12),
+          rgba(255, 255, 255, 0.06)
+        );
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+      }
+      .btn {
+        appearance: none;
+        border: 0;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 18px;
+        border-radius: 14px;
+        color: #fff;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 79, 216, 0.95),
+          rgba(139, 188, 255, 0.78)
+        );
+        box-shadow: 0 8px 30px rgba(255, 79, 216, 0.2);
+        min-width: 150px;
+        touch-action: manipulation;
+      }
+      .btn.secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: none;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .hint {
+        width: 100%;
+        text-align: center;
+        font-size: 0.88rem;
+        opacity: 0.82;
+        line-height: 1.4;
+      }
+
+      .heart,
+      .phrase,
+      .photo-fall {
+        position: absolute;
+        left: 0;
+        top: 0;
+        will-change: transform, opacity;
+        pointer-events: none;
+        filter: drop-shadow(0 0 14px rgba(255, 79, 216, 0.25));
+        transform: translate3d(0, 0, 0);
+        z-index: 50;
+      }
+      .heart {
+        color: #ff86e8;
+        font-size: 28px;
+        text-shadow: 0 0 10px rgba(255, 79, 216, 0.35);
+      }
+      .phrase {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        white-space: nowrap;
+      }
+      .photo-fall {
+        width: 72px;
+        height: 96px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: linear-gradient(45deg, var(--pink), var(--blue));
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+      }
+      .photo-fall::before {
+        content: "💕";
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .fade-black {
+        position: absolute;
+        inset: 0;
+        background: #000;
+        opacity: 1;
+        transition: opacity 1.8s ease;
+        pointer-events: none;
+        z-index: 200;
+      }
+      .fade-black.off {
+        opacity: 0;
+      }
+
+      .debug {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        opacity: 0.8;
+        display: none;
+        z-index: 1000;
+      }
+
+      @media (max-width: 768px) {
+        .panel {
+          padding: 12px;
+        }
+        .btn {
+          min-width: 138px;
+          padding: 13px 16px;
+        }
+        .photo-fall {
+          width: 58px;
+          height: 78px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="stars"></canvas>
+      <div id="fx"></div>
+
+      <div class="overlay">
+        <div id="intro" class="intro">Une histoire… pas comme les autres</div>
+        <div id="proposal" class="proposal">Will you marry me Elsa ? 💍</div>
+      </div>
+
+      <div class="ui">
+        <div class="panel">
+          <button id="startBtn" class="btn">Start Experience</button>
+          <button id="yesBtn" class="btn secondary" style="display: none">
+            YES
+          </button>
+          <div class="hint">Fonctionne parfaitement sur iOS/Safari ! ✨</div>
+        </div>
+      </div>
+
+      <div id="fadeBlack" class="fade-black"></div>
+      <div class="debug" id="debug"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script>
+      const intro = document.getElementById("intro");
+      const proposal = document.getElementById("proposal");
+      const startBtn = document.getElementById("startBtn");
+      const yesBtn = document.getElementById("yesBtn");
+      const fx = document.getElementById("fx");
+      const fadeBlack = document.getElementById("fadeBlack");
+      const starsCanvas = document.getElementById("stars");
+      const debug = document.getElementById("debug");
+      const sctx = starsCanvas.getContext("2d");
+
+      let W,
+        H,
+        dpr,
+        started = false,
+        t0 = performance.now();
+      let scene, camera, renderer, cube, galaxy, cubeGroup, controls;
+      let cubeRot = { x: 0, y: 0, vx: 0, vy: 0 };
+      let drag = { down: false, x: 0, y: 0, lastX: 0, lastY: 0, moved: false };
+      let zoomZ = 7.5;
+      let phraseTimer, photoTimer, heartTimer, proposalTimer, cameraTimer;
+
+      const romanticPhrases = [
+        "Elsa ❤️",
+        "I love you",
+        "Je veux te marier 💍",
+        "Forever 💖",
+      ];
+
+      // Audio compatible iOS/Safari
+      let audioCtx = null;
+      let piano = null;
+      let voice = null;
+
+      function initAudio() {
+        if (!window.AudioContext) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        piano = new Audio("piano.mp3");
+        voice = new Audio("voice.mp3");
+        if (piano && voice) {
+          piano.loop = true;
+          piano.volume = 0.32;
+          voice.volume = 0.95;
+          piano.preload = "auto";
+          voice.preload = "auto";
+        }
+      }
+
+      async function startAudio() {
+        try {
+          if (audioCtx && audioCtx.state === "suspended") {
+            await audioCtx.resume();
+          }
+          if (piano) {
+            await piano.play();
+            debug.textContent = `Audio: Piano OK (${audioCtx ? audioCtx.state : "no ctx"})`;
+          }
+          setTimeout(async () => {
+            if (voice) await voice.play();
+          }, 9000);
+        } catch (e) {
+          debug.textContent = `Audio error: ${e.message}`;
+          console.error(e);
+        }
+      }
+
+      function resize() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        starsCanvas.width = Math.floor(W * dpr);
+        starsCanvas.height = Math.floor(H * dpr);
+        starsCanvas.style.width = W + "px";
+        starsCanvas.style.height = H + "px";
+        sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (renderer) {
+          renderer.setSize(W, H, false);
+          renderer.setPixelRatio(dpr);
+          camera.aspect = W / H;
+          camera.updateProjectionMatrix();
+        }
+      }
+      window.addEventListener("resize", resize);
+
+      function initThree() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020202); // Fix black screen
+
+        camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 100);
+        camera.position.set(0, 0.2, zoomZ);
+
+        renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: false, // Fix iOS Safari
+          powerPreference: "high-performance",
+          premultipliedAlpha: false,
+        });
+        renderer.setSize(W, H, false);
+        renderer.setPixelRatio(dpr);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.8;
+
+        // Insert au début de #app pour z-index correct
+        document
+          .getElementById("app")
+          .insertBefore(renderer.domElement, starsCanvas.nextSibling);
+        debug.style.display = "block";
+
+        const amb = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(amb);
+
+        // Galaxy stars
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = Math.min(window.innerWidth < 768 ? 2500 : 6000, 8000);
+        const pos = new Float32Array(starCount * 3);
+        const col = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+          const r = 40 * Math.random() + 8;
+          const a = Math.random() * Math.PI * 2;
+          const b = Math.acos(2 * Math.random() - 1);
+          pos[i * 3] = r * Math.sin(b) * Math.cos(a);
+          pos[i * 3 + 1] = r * Math.sin(b) * Math.sin(a);
+          pos[i * 3 + 2] = r * Math.cos(b);
+          const tone = Math.random() > 0.8 ? [0.75, 0.85, 1] : [1, 1, 1];
+          col[i * 3] = tone[0] * (0.8 + Math.random() * 0.2);
+          col[i * 3 + 1] = tone[1] * (0.8 + Math.random() * 0.2);
+          col[i * 3 + 2] = tone[2] * (0.8 + Math.random() * 0.2);
+        }
+        starGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+        starGeo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+        const starMat = new THREE.PointsMaterial({
+          size: 0.06,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.95,
+          depthWrite: false,
+        });
+        galaxy = new THREE.Points(starGeo, starMat);
+        scene.add(galaxy);
+
+        // Cube particles
+        cubeGroup = new THREE.Group();
+        scene.add(cubeGroup);
+        const cubeCount = Math.min(window.innerWidth < 768 ? 1800 : 4200, 5000);
+        const cGeo = new THREE.BufferGeometry();
+        const cPos = new Float32Array(cubeCount * 3);
+        const cCol = new Float32Array(cubeCount * 3);
+        const n = 1.4;
+        for (let i = 0; i < cubeCount; i++) {
+          const face = i % 6;
+          const u = (Math.random() * 2 - 1) * n;
+          const v = (Math.random() * 2 - 1) * n;
+          let x = 0,
+            y = 0,
+            z = 0;
+          if (face === 0) {
+            x = n;
+            y = u;
+            z = v;
+          }
+          if (face === 1) {
+            x = -n;
+            y = u;
+            z = v;
+          }
+          if (face === 2) {
+            x = u;
+            y = n;
+            z = v;
+          }
+          if (face === 3) {
+            x = u;
+            y = -n;
+            z = v;
+          }
+          if (face === 4) {
+            x = u;
+            y = v;
+            z = n;
+          }
+          if (face === 5) {
+            x = u;
+            y = v;
+            z = -n;
+          }
+          cPos[i * 3] = x + (Math.random() - 0.5) * 0.08;
+          cPos[i * 3 + 1] = y + (Math.random() - 0.5) * 0.08;
+          cPos[i * 3 + 2] = z + (Math.random() - 0.5) * 0.08;
+          cCol[i * 3] = 1;
+          cCol[i * 3 + 1] = 0.82 + Math.random() * 0.12;
+          cCol[i * 3 + 2] = 0.94 + Math.random() * 0.06;
+        }
+        cGeo.setAttribute("position", new THREE.BufferAttribute(cPos, 3));
+        cGeo.setAttribute("color", new THREE.BufferAttribute(cCol, 3));
+        const cMat = new THREE.PointsMaterial({
+          size: 0.04,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.98,
+          depthWrite: false,
+        });
+        cube = new THREE.Points(cGeo, cMat);
+        cubeGroup.add(cube);
+
+        // Photo plane avec fallback
+        const imgLoader = new THREE.TextureLoader();
+        const planeGeo = new THREE.PlaneGeometry(2.2, 1.5);
+        const planeMat = new THREE.MeshBasicMaterial({
+          color: 0xff4fd8,
+          transparent: true,
+          opacity: 0.18,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+        const plane = new THREE.Mesh(planeGeo, planeMat);
+        plane.position.set(0, 0, 0.1);
+        cubeGroup.add(plane);
+
+        // Try load photo async
+        imgLoader.load(
+          "photo1.jpg",
+          (texture) => {
+            texture.colorSpace = THREE.SRGBColorSpace;
+            plane.material.map = texture;
+            plane.material.needsUpdate = true;
+            debug.textContent += " | Photo OK";
+          },
+          undefined,
+          (err) => {
+            console.warn("Photo not found, using color fallback:", err);
+            debug.textContent += " | No photo";
+          },
+        );
+
+        window.cubeGroup = cubeGroup;
+        debug.textContent = "Three.js initialized";
+      }
+
+      function drawStars() {
+        sctx.clearRect(0, 0, W, H);
+        const time = (performance.now() - t0) * 0.00005;
+        const cx = W * 0.5,
+          cy = H * 0.45;
+        const layers = 3;
+        for (let l = 0; l < layers; l++) {
+          const count = l === 0 ? 120 : l === 1 ? 60 : 30;
+          const alpha = l === 0 ? 0.55 : l === 1 ? 0.35 : 0.2;
+          for (let i = 0; i < count; i++) {
+            const x = (Math.sin(i * 999 + time * 10 + l) * 0.5 + 0.5) * W;
+            const y = (Math.cos(i * 555 + time * 8 + l * 3) * 0.5 + 0.5) * H;
+            const r = l === 0 ? 1.1 : l === 1 ? 1.6 : 2.1;
+            sctx.beginPath();
+            sctx.fillStyle = `rgba(255,255,255,${alpha})`;
+            sctx.arc(
+              x + Math.sin(time * 4 + l) * 18,
+              y + Math.cos(time * 3 + l) * 10,
+              r,
+              0,
+              Math.PI * 2,
+            );
+            sctx.fill();
+          }
+        }
+        const grd = sctx.createRadialGradient(
+          cx,
+          cy,
+          0,
+          cx,
+          cy,
+          Math.max(W, H) * 0.8,
+        );
+        grd.addColorStop(0, "rgba(255,79,216,0.08)");
+        grd.addColorStop(0.55, "rgba(139,188,255,0.04)");
+        grd.addColorStop(1, "rgba(0,0,0,0)");
+        sctx.fillStyle = grd;
+        sctx.fillRect(0, 0, W, H);
+      }
+
+      function spawnFloating(text, cls = "phrase") {
+        const el = document.createElement("div");
+        el.className = cls;
+        if (cls === "heart") el.textContent = "💖";
+        else if (cls === "photo-fall") {
+          el.innerHTML =
+            '<div style="width:100%;height:100%;background:linear-gradient(45deg,var(--pink),var(--blue));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;">💕</div>';
+        } else {
+          el.textContent = text;
+        }
+        fx.appendChild(el);
+        const x = Math.random() * W;
+        const y = -120 - Math.random() * H * 0.1;
+        const dur = 7000 + Math.random() * 5000;
+        const drift = (Math.random() - 0.5) * 180;
+        const rot = (Math.random() - 0.5) * 120;
+        const scale = cls === "phrase" ? 0.95 + Math.random() * 0.4 : 1;
+        let start = performance.now();
+        function step(now) {
+          const p = Math.min((now - start) / dur, 1);
+          const ease = p * p * (3 - 2 * p);
+          const yy = y + ease * (H + 240);
+          const xx = x + drift * ease + Math.sin(p * 6) * 10;
+          const a = p < 0.12 ? p / 0.12 : p > 0.88 ? (1 - p) / 0.12 : 1;
+          el.style.transform = `translate3d(${xx}px, ${yy}px, 0) rotate(${rot * p}deg) scale(${scale})`;
+          el.style.opacity = a;
+          if (p < 1) requestAnimationFrame(step);
+          else el.remove();
+        }
+        requestAnimationFrame(step);
+      }
+
+      function spawnHeart() {
+        spawnFloating("", "heart");
+      }
+      function spawnPhrase() {
+        spawnFloating(
+          romanticPhrases[Math.floor(Math.random() * romanticPhrases.length)],
+          "phrase",
+        );
+      }
+      function spawnPhoto() {
+        spawnFloating("", "photo-fall");
+      }
+
+      function startShow() {
+        if (started) return;
+        started = true;
+        startBtn.disabled = true;
+        startBtn.textContent = "Démarré !";
+        fadeBlack.classList.add("off");
+        intro.classList.add("visible");
+        initAudio();
+        initThree();
+        resize();
+        startAudio();
+
+        setTimeout(() => {
+          intro.classList.remove("visible");
+        }, 3500);
+
+        const baseInterval = window.innerWidth < 768 ? 1800 : 1200;
+        phraseTimer = setInterval(spawnPhrase, baseInterval);
+        heartTimer = setInterval(spawnHeart, baseInterval * 0.7);
+        photoTimer = setInterval(
+          spawnPhoto,
+          window.innerWidth < 768 ? 2600 : 1800,
+        );
+
+        proposalTimer = setTimeout(() => {
+          proposal.classList.add("visible");
+          yesBtn.style.display = "inline-flex";
+          startBtn.style.display = "none";
+        }, 17000);
+
+        cameraTimer = setInterval(() => {
+          zoomZ = Math.max(
+            5.5,
+            Math.min(8.3, zoomZ + (Math.random() - 0.5) * 0.2),
+          );
+        }, 120);
+      }
+
+      startBtn.addEventListener("click", startShow);
+      yesBtn.addEventListener("click", () => {
+        yesBtn.textContent = "💖 Forever";
+        yesBtn.classList.remove("secondary");
+        proposal.textContent = "Elsa said YES 💖";
+        proposal.classList.add("visible");
+        spawnPhrase();
+        spawnHeart();
+        spawnHeart();
+        spawnPhoto();
+      });
+
+      // Touch/drag iOS compatible
+      window.addEventListener(
+        "pointerdown",
+        (e) => {
+          if (!started || !window.cubeGroup) return;
+          drag.down = true;
+          drag.x = e.clientX;
+          drag.y = e.clientY;
+          drag.lastX = e.clientX;
+          drag.lastY = e.clientY;
+          drag.moved = false;
+          e.preventDefault();
+        },
+        { passive: false },
+      );
+
+      window.addEventListener(
+        "pointermove",
+        (e) => {
+          if (!started || !drag.down || !window.cubeGroup) return;
+          const dx = e.clientX - drag.lastX;
+          const dy = e.clientY - drag.lastY;
+          drag.lastX = e.clientX;
+          drag.lastY = e.clientY;
+          cubeRot.vy += dx * 0.0009;
+          cubeRot.vx += dy * 0.0009;
+          drag.moved = true;
+          e.preventDefault();
+        },
+        { passive: false },
+      );
+
+      window.addEventListener("pointerup", () => {
+        drag.down = false;
+      });
+
+      window.addEventListener(
+        "wheel",
+        (e) => {
+          if (!started || !camera) return;
+          e.preventDefault();
+          zoomZ += e.deltaY * 0.0015;
+          zoomZ = Math.max(4.8, Math.min(10.5, zoomZ));
+        },
+        { passive: false },
+      );
+
+      let last = performance.now();
+      function animate(now) {
+        requestAnimationFrame(animate);
+        const dt = Math.min((now - last) / 16.67, 2);
+        last = now;
+
+        drawStars();
+
+        if (scene && camera && renderer && cubeGroup) {
+          // Galaxy rotation
+          if (galaxy) {
+            galaxy.rotation.y += 0.0009 * dt;
+            galaxy.rotation.x = Math.sin(now * 0.00006) * 0.08;
+          }
+
+          // Cube rotation FIXED
+          cubeRot.x += cubeRot.vx * dt * 0.1; // Apply velocity
+          cubeRot.y += cubeRot.vy * dt * 0.1;
+          cubeRot.vx *= 0.94;
+          cubeRot.vy *= 0.94;
+
+          if (!drag.down) {
+            cubeRot.y += 0.00045 * dt;
+            cubeRot.x += 0.00018 * dt;
+          }
+
+          cubeGroup.rotation.x = cubeRot.x;
+          cubeGroup.rotation.y = cubeRot.y;
+          cubeGroup.rotation.z = Math.sin(now * 0.0004) * 0.03;
+          cubeGroup.position.y = Math.sin(now * 0.001) * 0.08;
+          cubeGroup.scale.setScalar(1 + Math.sin(now * 0.0013) * 0.02);
+          camera.position.z += (zoomZ - camera.position.z) * 0.06;
+          camera.lookAt(0, 0, 0);
+
+          renderer.render(scene, camera);
+        }
+      }
+      resize();
+      requestAnimationFrame(animate);
+    </script>
+  </body>
+</html>
